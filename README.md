@@ -1,25 +1,3 @@
-<<<<<<< HEAD
----
-title: Software to be installed before R-GIS class
-author: "David M. Kaplan"
-date: '`r format(Sys.time(), "%B %d, %Y")`'
-output:
-  pdf_document:
-    df_print: kable
-    highlight: zenburn
-    toc: false
-  html_document: default
-#csl: /home/dmk/docs/refs/zotero-my-csl/dmk-format.csl
-#bibliography: databases.bib
-link-citations: TRUE
-urlcolor: blue
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-#download.file("http://localhost:23119/better-bibtex/collection?/1/classes/databases.biblatex","databases.bib")
-```
-
 # Instructors
 
 * **Names:** David M. Kaplan with assistance from Laure Velez
