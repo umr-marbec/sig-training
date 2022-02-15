@@ -1,0 +1,993 @@
+GIS in R
+========================================================
+author: David M. Kaplan
+date: 2019-08-16
+autosize: true
+incremental: true
+
+<style>
+.small-code pre code {
+  font-size: 1em;
+}
+.error-code pre code {
+  color: red;
+}
+.small-error-code pre code {
+  font-size: 1em;
+  color: red;
+}
+</style>
+
+Organization
+=====================================
+
+- Introductions
+- Please ask questions
+    - Interrupt or chat
+    - English, French or Spanish
+- Do not let me continue if you did not understand
+- When doing exercises use "thumbs up" to indicate that you have finished
+- Laure Velez will keep an eye on chat, etc.
+- Lecture to be distributed after class
+
+
+Getting going
+========================================
+
+- Create new `RStudio` project
+- Class website: https://www.davidmkaplan.fr/classes/2022-02-r-gis-marbec/
+    - Download [data.zip](https://www.davidmkaplan.fr/classes/2022-02-r-gis-marbec/data.zip), [shapefiles.zip](https://www.davidmkaplan.fr/classes/2022-02-r-gis-marbec/shapefiles.zip)
+    - Unzip to project directory
+    - Unzip zip inside `shapefiles`
+
+Outline
+========================================
+incremental: false
+
+- Status of GIS in R
+
+- Loading and manipulating geographic data
+
+- Basic maps
+
+- More sophisticated maps with `tmap`
+
+- Spatial analyses
+
+- Leaflet
+
+
+History of GIS in R
+========================================================
+
+- Overview provided in [CRAN Task View: Analysis of Spatial Data](https://cran.r-project.org/web/views/Spatial.html)
+- In the beginning, there was the [sp](https://cran.r-project.org/package=sp) package
+- sp begot: [maps](https://cran.r-project.org/package=maps), [maptools](https://cran.r-project.org/package=maptools), [raster](https://cran.r-project.org/package=raster), [rgdal](https://cran.r-project.org/package=rgdal), [rgeos](https://cran.r-project.org/package=rgeos), [gstat](https://cran.r-project.org/package=gstat), [shapefiles](https://cran.r-project.org/package=shapefiles)...
+- Problems: Slow, clunky, poor graphics, non-standard, duplicated functionality
+- Then R gods said let there be [sf](https://cran.r-project.org/package=sf)
+    - New standards-compliant spatial data package for R
+    - Much faster, better graphics, englobes functionality of many other packages
+- Little angels: [tmap](https://cran.r-project.org/package=tmap), [tmaptools](https://cran.r-project.org/package=tmaptools), [stars](https://cran.r-project.org/package=stars), [leaflet](https://cran.r-project.org/package=leaflet), [mapview](https://cran.r-project.org/package=mapview)
+
+Advantages of sf
+================================================================
+
+- Standards compliant
+    - Implementation of [Simple Features](https://en.wikipedia.org/wiki/Simple_Features) specification
+    - Functionality similar to that in many database GIS tools
+- Simplicity
+    - Vector spatial data contained in column(s) of data frames
+    - Geometries use standard WKT/WKB formats
+    - Standard SRID for coordinate system
+- Plays well with others
+    - [tmap](https://cran.r-project.org/package=tmap) & [tmaptools](https://cran.r-project.org/package=tmaptools) for graphics
+    - Easy database and shapefile support
+
+Disadvantages of sf
+================================================================
+
+- Sometimes breaks exhisting menagerie of [sp](https://cran.r-project.org/package=sp)-based packages
+    - Tools to convert to `sp` format
+    - Less and less the case
+- Still a work in progress
+    - Errors & some things a bit clunky
+    - Some expected functionality not present
+    - Less and less the case
+- No raster support
+    - [raster](https://cran.r-project.org/package=raster) package for that
+    - [stars](https://cran.r-project.org/package=stars) package in active development and may provide that
+
+Data for class
+===============================================================
+class: small-code
+
+- If you have not downloaded the data, do so now
+
+```{r eval=FALSE}
+download.file("http://www.davidmkaplan.fr/classes/2022-02-r-gis-marbec/shapefiles.zip","shapefiles.zip")
+```
+
+```{r eval=FALSE}
+download.file("http://www.davidmkaplan.fr/classes/2022-02-r-gis-marbec/data.zip","data.zip")
+```
+
+- Unzip `shapefiles.zip` and unzip the zip file inside it
+
+```{r eval=FALSE}
+unzip("shapefiles.zip")
+unzip("shapefiles/gadm36_ZAF_shp.zip"),
+      exdir="shapefiles")
+```
+
+- Unzip `data.zip`
+
+```{r eval=FALSE}
+unzip("data.zip")
+```
+
+
+Visualize data in QGIS
+=============================================================
+incremental: false
+
+Open QGIS and I will explain how to visualize data.
+
+Note some of data cannot be used for commercial purposes or redistributed.
+
+## Types of GIS data
+
+- *Vector* (points, curves, polygons; e.g., shapefiles)
+- *Raster* (on a pixelized grid; satellite images; e.g., geoTiff)
+
+## Vocabulary
+
+- *Layer* (one layer of map; e.g., shapefile)
+- *Feature* (single point, curve, polygon)
+- *Attribute table* (data frame containing one line per feature)
+- *Field* (column of attribute table)
+
+Read in shapefile
+=============================================================
+class: small-code
+
+```{r include=FALSE}
+library(sf)
+```
+
+```{r}
+library(sf)
+gadm0 = st_read("shapefiles/gadm36_ZAF_0.shp")
+```
+
+Explore shapefile
+=============================================================
+class: small-code
+
+```{r}
+class(gadm0)
+names(gadm0)
+gadm0
+```
+
+Basic plot of shapefile
+===============================================================
+incremental: false
+
+```{r cache=TRUE}
+plot(gadm0)
+```
+
+Basic plot of shapefile
+===============================================================
+incremental: false
+
+```{r cache=TRUE}
+plot(st_geometry(gadm0),col="red",lwd=10)
+```
+
+Load & explore other shapefiles
+============================================================
+class: small-code
+
+```{r results='hide'}
+gadm1 = st_read("shapefiles/gadm36_ZAF_1.shp")
+gadm2 = st_read("shapefiles/gadm36_ZAF_2.shp")
+gadm3 = st_read("shapefiles/gadm36_ZAF_3.shp")
+gadm4 = st_read("shapefiles/gadm36_ZAF_4.shp")
+```
+
+```{r eval=FALSE,echo=FALSE}
+for (i in 0:4) {
+  assign(paste0("gadm",i),
+         st_read(paste0("shapefiles/gadm36_ZAF_",i,".shp")))
+}
+```
+
+Load & explore other shapefiles
+============================================================
+class: small-code
+
+```{r}
+gadm3
+```
+
+Plot counties
+=======================================================
+incremental: false
+
+```{r cache=TRUE}
+plot(st_geometry(gadm3))
+```
+
+Plot counties, color by regions
+=======================================================
+incremental: false
+
+```{r eval=FALSE}
+plot(gadm3["NAME_1"])
+```
+
+Plot counties, color by regions
+=======================================================
+incremental: false
+
+```{r cache=TRUE,fig.dim=c(10,5)}
+plot(gadm3["NAME_1"])
+```
+
+Better plots with tmap
+======================================================
+
+- [tmap](https://cran.r-project.org/package=tmap) is a package for making publication-quality maps
+- Powerful, but a bit slow
+- Relatively straightforward conceptually once you get the basics
+
+Improved tmap plot
+=======================================================
+class: small-code
+incremental: false
+
+```{r eval=FALSE}
+library(tmap)
+tm_shape(gadm3) + tm_polygons(col="NAME_1")
+```
+
+```{r include=FALSE}
+library(tmap)
+```
+
+
+Improved tmap plot
+=======================================================
+class: small-code
+incremental: false
+
+```{r cache=TRUE}
+library(tmap)
+tm_shape(gadm3) + tm_polygons(col="NAME_1")
+```
+
+
+Spruce it up a bit
+=======================================================
+class: small-code
+incremental: false
+
+```{r eval=FALSE}
+bm = tm_shape(gadm3) + tm_polygons(col="NAME_1",title="Province")
+bm + tm_legend(outside=TRUE,outside.position="right") +
+  tm_compass() + tm_grid()
+```
+
+Spruce it up a bit
+=======================================================
+class: small-code
+incremental: false
+
+```{r cache=TRUE,fig.dim=c(10,5),echo=FALSE}
+bm = tm_shape(gadm3) + tm_polygons(col="NAME_1",title="Province")
+bm + tm_legend(outside=TRUE,outside.position="right") +
+  tm_compass() + tm_grid()
+```
+
+tmap philosophy
+=======================================================
+class: small-code
+
+- Uses a [ggplot2](https://cran.r-project.org/package=ggplot2) approach
+
+```{r eval=FALSE}
+tm_shape(...) + tm_polygons(...)
+tm_shape(...) + tm_symbols(...)
+tm_shape(...) + tm_raster(...)
+```
+
+- But without a lot of the ggplot2 baggage
+- Plots can be put in variables
+- Only produce figure when plot variable printed
+
+```{r eval=FALSE}
+bm=tm_shape(gadm3)+tm_polygons(col="NAME_1",title="Province")
+bm
+print(bm)
+```
+
+- Basic structure: `tm_shape` defines active layer, `tm_polygons` decides how to plot it
+
+Put some magic in your life
+=================================================
+
+```{r eval=FALSE}
+lf = tmap_leaflet(bm)
+lf
+```
+
+- Based on `leaflet.js` javascript code for making interactive maps
+- Export to/embed in website, Rmarkdown (html) or Shiny
+- Much more sophisticated
+
+Even better
+================================================
+
+```{r eval=FALSE}
+bm=tm_shape(gadm3)+
+  tm_polygons(col="NAME_1",title="Province",
+              popup.vars=c("NAME_0","NAME_1","NAME_2","NAME_3"))
+tmap_leaflet(bm)
+```
+
+
+Load a raster layer
+================================================
+
+```{r}
+library(raster)
+bath = raster("shapefiles/bathymetry.tif")
+bath
+```
+
+Basic plot
+================================================
+incremental: false
+
+```{r cache=TRUE}
+plot(bath)
+```
+
+tmap version
+================================================
+incremental: false
+
+```{r eval=FALSE}
+tm_shape(bath) + tm_raster(style="cont") +
+  tm_shape(gadm0) + tm_polygons()
+```
+
+tmap version
+================================================
+incremental: false
+
+```{r cache=TRUE, echo=FALSE}
+tm_shape(bath) + tm_raster(style="cont") +
+  tm_shape(gadm0) + tm_polygons()
+```
+
+tmap version
+================================================
+incremental: false
+
+```{r eval=FALSE}
+tm_shape(bath) + tm_raster(style="cont") +
+  tm_shape(gadm0) + tm_polygons(border.col="black",alpha=0,lwd=4)
+```
+
+tmap version
+================================================
+incremental: false
+
+```{r cache=TRUE, echo=FALSE}
+tm_shape(bath) + tm_raster(style="cont") +
+  tm_shape(gadm0) + tm_polygons(border.col="black",alpha=0,lwd=4)
+```
+
+tmap version
+================================================
+incremental: false
+
+```{r eval=FALSE}
+tm_shape(bath) + tm_raster(style="cont") +
+  tm_shape(gadm0) + tm_borders(col="black",lwd=4)
+```
+
+tmap version
+================================================
+incremental: false
+
+```{r cache=TRUE, echo=FALSE}
+tm_shape(bath) + tm_raster(style="cont") +
+  tm_shape(gadm0) + tm_borders(col="black",lwd=4)
+```
+
+tmap version
+================================================
+incremental: false
+
+Compare with this one:
+
+```{r eval=FALSE}
+tm_shape(bath) + tm_raster(style="cont") +
+  tm_shape(gadm0, is.master = TRUE) + 
+  tm_borders(col="black",lwd=4)
+```
+
+Grab layer from database
+====================================================
+class: small-code
+
+```{r}
+sites = st_read("data/gannet_stomach_data_for_class.sqlite",
+                "sites")
+```
+
+- SQLite is a single-file, multi-layer database like Access
+- Can handle spatial data with SpatialLite
+    - SF implementation
+- I use database server PostgreSQL+PostGIS
+    - SF implementation
+
+Add to previous province map
+====================================================
+class: small-code
+
+```{r cache=TRUE}
+bm = tm_shape(gadm3) + tm_polygons(col="NAME_1",title="Province")
+bm2 = bm + tm_legend(outside=TRUE,outside.position="right") +
+  tm_compass() + tm_grid()
+```
+
+```{r eval=FALSE}
+bm2 + tm_shape(sites) + 
+  tm_symbols(col="site",title.col="Study sites",
+             border.col="black",border.lwd = 2)
+```
+
+Add to previous province map
+====================================================
+incremental: false
+
+```{r echo=FALSE,cache=TRUE,fig.dim=c(10,5)}
+bm2 + tm_shape(sites) + 
+  tm_symbols(col="site",title.col="Study sites",
+             border.col="black",border.lwd = 2)
+```
+
+Analyses: Sites with Province, Population & Depth
+====================================================
+
+- Adapted from https://www.worldfullofdata.com/r-tutorial-plot-maps-shapefiles/
+- For analyses, want to associate study sites with provinces, populations of those provinces and bathymetry
+    - **Step 1:** Merge population data with `gadm1` based on province names
+    - **Step 2:** Join study sites with provinces (`gadm1`)
+    - **Step 3:** Extract bathymetry values at sites
+
+Step 1: Merge population data based on province names
+=============================================================
+class: small-code
+
+- Population data from https://en.wikipedia.org/wiki/List_of_South_African_provinces_by_population
+
+```{r eval=TRUE}
+source("data/pop.R")
+```
+
+```{r eval=FALSE}
+source("https://www.davidmkaplan.fr/classes/2022-02-r-gis-marbec/data/pop.R")
+```
+
+```{r eval=FALSE}
+population <- data.frame(
+  province = c("Gauteng", "KwaZulu-Natal", "Western Cape", "Eastern Cape",
+               "Limpopo", "Mpumalanga", "North West", "Free State", 
+               "Northern Cape"),
+  population = c(14278669, 11074784, 6510312, 6498683, 5778442, 4444212, 
+                 3856174, 2866678, 1213996)
+)
+```
+
+Step 1: Merge population data based on province names
+=============================================================
+class: small-code
+
+- Merge by shared column information
+
+- Use `merge` function for data frames
+
+```{r eval=FALSE}
+?merge
+```
+
+- Specifically, the help for the data frame method is the most useful
+
+```{r eval=FALSE}
+methods(merge)
+?merge.data.frame
+```
+
+- Just use `merge`, not `merge.data.frame` in code
+    - Specific method chosen based on inputs
+
+Step 1: Merge population data based on province names
+=============================================================
+class: small-code
+
+```{r}
+gadm1_pop = merge(gadm1,population,by.x="NAME_1",by.y="province")
+gadm1_pop
+```
+
+Exercise: Plot by population
+============================================================
+class:small-code
+
+```{r eval=FALSE}
+plot(gadm1_pop["population"])
+```
+
+```{r eval=FALSE}
+tm_shape(gadm1_pop) + tm_polygons(col="population",style="cont")
+```
+
+Exercise: Plot by population
+============================================================
+incremental:false
+class:small-code
+
+```{r cache=TRUE}
+plot(gadm1_pop["population"])
+```
+
+***
+
+```{r cache=TRUE}
+tm_shape(gadm1_pop) + tm_polygons(col="population",style="cont")
+```
+
+
+Step 2: Join study sites with provinces
+=========================================================
+
+- Spatial merger based on intersection / superposition
+
+- Use `st_join` function to merge two layers
+
+```{r eval=FALSE}
+?st_join
+```
+
+Step 2: Join study sites with provinces
+=========================================================
+class: small-code
+
+```{r}
+sites_pop = st_join(sites,gadm1_pop,left=TRUE)
+sites_pop
+```
+
+Step 3: Extract bathymetry values at sites
+========================================================
+class: small-error-code
+
+- Try `st_join`
+
+```{r error=TRUE}
+st_join(sites_pop,bath,left=TRUE)
+```
+
+- `sf` does not work with raster layers...
+- `raster` package for that
+
+Step 3: Extract bathymetry values at sites
+========================================================
+class: small-code
+
+- `extract` function of the `raster` package
+
+```{r}
+library(raster)
+?raster::extract
+```
+
+```{r error=TRUE}
+extract(bath,sites_pop)
+```
+
+- Old version of `raster` doesn't understand `sf`...
+    - Needed to convert `sf` to `sp`
+    - `sf::as_Spatial`
+
+```{r}
+extract(bath,as_Spatial(sites_pop))
+```
+
+Step 3: Extract bathymetry values at sites
+========================================================
+class: small-code
+
+- Add to `sites_pop`
+
+```{r}
+sites_pop$bath = extract(bath,sites_pop)
+sites_pop
+```
+
+
+Save results
+========================================================
+
+- We have done some useful work
+- Want to save layers for future reference
+- Multiple options:
+    - Shapefiles
+    - Add to spatialite DB
+    - KML/KMZ (Google Earth)
+    - RDS/RData
+- Focus on first three
+    - Last is the same as for any R object
+
+Save results: Shapefile
+========================================================
+class: small-code
+
+```{r include=FALSE,eval=FALSE}
+file.remove(dir("results/",full.names=TRUE))
+```
+
+
+```{r}
+dir.create("results")
+```
+
+```{r eval=!file.exists("results/sites_pop.shp")}
+st_write(sites_pop,"results/sites_pop.shp")
+```
+
+Save results: Spatialite DB
+========================================================
+class: small-code
+
+- Copy to not loose original DB
+
+```{r eval=!file.exists("results/gannet_stomach_data_for_class.sqlite")}
+file.copy("data/gannet_stomach_data_for_class.sqlite",
+          "results/gannet_stomach_data_for_class.sqlite")
+```
+
+- Write new layer
+
+```{r}
+st_write(sites_pop,"results/gannet_stomach_data_for_class.sqlite",
+         "sites_pop",delete_layer=TRUE)
+```
+
+- Check that layer is in place:
+
+```{r}
+st_layers("results/gannet_stomach_data_for_class.sqlite")
+```
+
+
+Save results: KML
+=======================================================
+class: small-code
+
+- Format used for many web applications
+
+```{r eval=!file.exists("results/sites_pop.kml")}
+st_write(sites_pop,dsn="results/sites_pop.kml",layer="sites_pop",
+               driver="LIBKML",update=TRUE)
+```
+
+- Check it out in Google Earth
+
+The leaflet package
+=======================================================
+
+- `tmap_leaflet` works well in many cases
+- But sometimes want more precise control of leaflet maps
+- For this there is the [leaflet](https://cran.r-project.org/package=leaflet) package
+    - Lots of functionality, mostly beyond scope of class
+    - Documentation: https://rstudio.github.io/leaflet/
+
+Example: Volcanoes of the Americas
+=======================================================
+class: small-code
+
+```{r}
+source("https://www.davidmkaplan.fr/classes/2022-02-r-gis-marbec/shapefiles/volcanoes_layer.R")
+volcanoes
+```
+
+Example: Volcanoes of the Americas
+=======================================================
+class: small-code
+
+- Wanted to plot with popup with links to wikipedia page
+- Try first using `tmap_leaflet`
+    - **Hint:** Attempt with `popup.vars`
+
+tmap version
+=======================================================
+class: small-code
+
+```{r eval=FALSE}
+tm = tm_shape(volcanoes) + 
+  tm_symbols(col="altitude",popup.vars=c("name","altitude","wikipedia"))
+tmap_leaflet(tm)
+```
+
+tmap version
+=======================================================
+
+```{r echo=FALSE, cache=FALSE}
+tm = tm_shape(volcanoes) + 
+  tm_symbols(col="altitude",popup.vars=c("name","altitude","wikipedia"))
+mapview::mapshot(tmap_leaflet(tm),file="volcanoes.png")
+```
+
+![volcanoes](./volcanoes.png)
+
+leaflet version
+=======================================================
+class: small-code
+
+```{r include=FALSE}
+library(leaflet)
+```
+
+```{r}
+library(leaflet)
+lf = leaflet(volcanoes)
+lf = addTiles(lf)
+lf = addMarkers(lf)
+```
+
+```{r eval=FALSE}
+lf
+```
+
+leaflet version
+=======================================================
+
+```{r echo=FALSE, cache=TRUE}
+lf
+```
+
+Alternative syntax
+=======================================================
+
+```{r}
+lf = volcanoes |> leaflet() |> addTiles() |> addMarkers()
+```
+
+- Uses the pipe operator `|>` (`%>%` before R 4.1)
+- More and more common in R
+- Part of the whole `tidyverse` thing
+
+Topo tiles
+======================================================
+incremental: false
+
+```{r eval=FALSE}
+lf |> addProviderTiles(providers$OpenTopoMap)
+```
+
+Topo tiles
+======================================================
+incremental: false
+
+```{r cache=TRUE}
+lf |> addProviderTiles(providers$OpenTopoMap)
+```
+
+Bathymetry tiles
+======================================================
+incremental: false
+
+```{r cache=TRUE}
+lf |> addProviderTiles(providers$Esri.OceanBasemap)
+```
+
+Tile providers
+======================================================
+class: small-code
+
+```{r}
+names(providers)
+```
+
+Tile providers
+======================================================
+class: small-code
+
+- Explore: http://leaflet-extras.github.io/leaflet-providers/preview/
+- Google maps notably absent from list
+- Possible, but requires API key and potentially payment
+- Nowadays, lots of attractive free options
+
+Improve marks
+======================================================
+class: small-code
+incremental: false
+
+```{r eval=FALSE}
+pal = colorNumeric("YlOrRd",volcanoes$altitude)
+
+volcanoes |> leaflet() |> addTiles() |> 
+  addCircleMarkers(stroke=FALSE,color=~pal(altitude),fillOpacity=1)
+```
+
+Improve marks
+======================================================
+class: small-code
+incremental: false
+
+```{r cache=TRUE}
+pal = colorNumeric("YlOrRd",volcanoes$altitude)
+
+volcanoes |> leaflet() |> addTiles() |> 
+  addCircleMarkers(stroke=FALSE,color=~pal(altitude),fillOpacity=1)
+```
+
+How it works
+======================================================
+
+```{r eval=FALSE}
+pal = colorNumeric("YlOrRd",volcanoes$altitude)
+```
+
+- Creates a palette function adjusted to our data
+- `"YlOrRd"` refers to yellow-orange-red
+
+```{r eval=FALSE}
+color = ~pal(altitude)
+```
+
+- Formula notation (as in linear regression models)
+- Can be used in any leaflet argument
+
+Add legend
+======================================================
+class: small-code
+incremental: false
+
+```{r eval=FALSE}
+pal = colorNumeric("YlOrRd",volcanoes$altitude)
+
+volcanoes |> leaflet() |> addTiles() |> 
+  addCircleMarkers(stroke=FALSE,color=~pal(altitude),fillOpacity=1) |> 
+  addLegend(title="Altitude (m)",pal=pal,values=volcanoes$altitude,
+            opacity=1)
+```
+
+Add legend
+======================================================
+class: small-code
+incremental: false
+
+```{r cache=TRUE}
+pal = colorNumeric("YlOrRd",volcanoes$altitude)
+
+volcanoes |> leaflet() |> addTiles() |> 
+  addCircleMarkers(stroke=FALSE,color=~pal(altitude),fillOpacity=1) |> 
+  addLegend(title="Altitude (m)",pal=pal,values=volcanoes$altitude,
+            opacity=1)
+```
+
+Layer controls
+======================================================
+class: small-code
+incremental: false
+
+```{r eval=FALSE}
+pal = colorNumeric("YlOrRd",volcanoes$altitude)
+
+volcanoes |> leaflet() |> addTiles(group="OSM") |>
+  addProviderTiles(providers$OpenTopoMap,group="OTM") |>
+  addCircleMarkers(stroke=FALSE,color=~pal(altitude),fillOpacity=1,
+                   group="Volcanoes") |> 
+  addLegend(title="Altitude (m)",pal=pal,values=volcanoes$altitude,
+            opacity=1,group="Volcanoes") |>
+  addLayersControl(position="topleft",
+                   baseGroups = c("OSM","OTM"),
+                   overlayGroups = c("Volcanoes"))
+```
+
+Layer controls
+======================================================
+class: small-code
+incremental: false
+
+```{r cache=TRUE}
+pal = colorNumeric("YlOrRd",volcanoes$altitude)
+
+volcanoes |> leaflet() |> addTiles(group="OSM") |>
+  addProviderTiles(providers$OpenTopoMap,group="OTM") |>
+  addCircleMarkers(stroke=FALSE,color=~pal(altitude),fillOpacity=1,
+                   group="Volcanoes") |> 
+  addLegend(title="Altitude (m)",pal=pal,values=volcanoes$altitude,
+            opacity=1,group="Volcanoes") |>
+  addLayersControl(position="topleft",
+                   baseGroups = c("OSM","OTM"),
+                   overlayGroups = c("Volcanoes"))
+```
+
+Popups
+==================================================
+
+Two steps:
+
+1. Add column to `volcanoes` with HTML for popups
+2. Add to markers definition
+
+Popups: Step 1
+==================================================
+class: small-code
+
+```{r include=FALSE}
+library(htmltools)
+```
+
+
+```{r echo=TRUE}
+library(htmltools)
+volcanoes$popup = 
+  paste0(htmlEscape(volcanoes$name),'<br/>',
+         volcanoes$altitude,' m<br/>',
+         '<a href="',volcanoes$wikipedia,'">Wikipedia</a>') |>
+  lapply(HTML) # Forces recognition as HTML
+```
+
+```{r echo=FALSE,eval=FALSE}
+library(htmltools)
+f=function(name,alt,wiki)
+  paste(htmlEscape(name),br(),alt,"m",br(),a(href=wiki,"Wikipedia"))
+volcanoes$popup = 
+  mapply(f,name=volcanoes$name,alt=volcanoes$altitude,
+         wiki=volcanoes$wikipedia,SIMPLIFY=FALSE) |> 
+  lapply(HTML) # Forces recognition as HTML
+```
+
+
+```{r}
+head(volcanoes$popup)
+```
+
+
+Popups: Step 2
+==================================================
+class: small-code
+
+- Use column `popup` as argument `popup` to `addCircleMarkers`
+- Use column `name` as label
+
+```{r eval=FALSE}
+pal = colorNumeric("YlOrRd",volcanoes$altitude)
+
+volcanoes |> leaflet() |> addTiles(group="OSM") |>
+  addProviderTiles(providers$OpenTopoMap,group="OTM") |>
+  addCircleMarkers(stroke=FALSE,color=~pal(altitude),fillOpacity=1,
+                   group="Volcanoes",popup=~popup,label=~name) |> 
+  addLegend(title="Altitude (m)",pal=pal,values=volcanoes$altitude,
+            opacity=1,group="Volcanoes") |>
+  addLayersControl(position="topleft",
+                   baseGroups = c("OSM","OTM"),
+                   overlayGroups = c("Volcanoes"))
+```
+
+Example: Research activities
+==============================
+incremental: false
+
+See https://www.davidmkaplan.fr/davidmkaplan.location_map.html
+
+See https://umr-marbec.fr/les-observatoires/reeftemps/
