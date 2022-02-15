@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ---
 title: Software to be installed before R-GIS class
 author: "David M. Kaplan"
