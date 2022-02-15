@@ -30,3 +30,4 @@ shapefiles/gadm36_ZAF_4.prj filter=lfs diff=lfs merge=lfs -text
 shapefiles/volcanoes_layer.R filter=lfs diff=lfs merge=lfs -text
 shapefiles/bathymetry.tif filter=lfs diff=lfs merge=lfs -text
 notes-nicolas.ipynb filter=lfs diff=lfs merge=lfs -text
+notes-nicolas.html filter=lfs diff=lfs merge=lfs -text

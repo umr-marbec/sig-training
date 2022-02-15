@@ -60,9 +60,13 @@
 #
 # ### Read in shapefile
 
+# +
+unlink("results", recursive = TRUE) # will delete directory called 'results'
+
 library(sf)
 gadm0 = st_read("shapefiles/gadm36_ZAF_0.shp")
 gadm0
+# -
 
 # 1 geographic object (i.e feature) of type `MULTIPOLYGON` and 2 fields.  
 
@@ -297,7 +301,6 @@ lf = volcanoes %>% leaflet() %>% addTiles() %>% addMarkers()
 # To change map:
 
 lf %>% addProviderTiles(providers$OpenTopoMap)
-lf
 
 # To list all providers:
 
